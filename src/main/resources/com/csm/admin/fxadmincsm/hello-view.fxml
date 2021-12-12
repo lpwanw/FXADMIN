@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.csm.admin.fxadmincsm.controller.HelloController">
+   <left>
+      <VBox alignment="CENTER" prefHeight="382.0" prefWidth="176.0" spacing="20.0" BorderPane.alignment="CENTER">
+          <padding>
+              <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+          </padding>
+      
+                <Label fx:id="welcomeText" />
+      </VBox>
+   </left>
+   <center>
+      <TableView fx:id="table" onMouseClicked="#onTableClick" prefHeight="382.0" prefWidth="360.0" BorderPane.alignment="CENTER">
+        <columns>
+          <TableColumn fx:id="pcName" prefWidth="408.0" text="Tên Máy" />
+        </columns>
+      </TableView>
+   </center>
+   <bottom>
+      <HBox alignment="CENTER" prefHeight="51.0" prefWidth="786.0" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="refeshButton" mnemonicParsing="false" onAction="#onRefeshAction" text="Làm mới danh sách">
+               <HBox.margin>
+                  <Insets right="50.0" />
+               </HBox.margin>
+            </Button>
+             <Button onAction="#onHelloButtonClick" text="Chụp màn hình">
+               <HBox.margin>
+                  <Insets right="50.0" />
+               </HBox.margin></Button>
+            <Button mnemonicParsing="false" onAction="#getClipBoardAction" text="Clipboard">
+               <HBox.margin>
+                  <Insets right="50.0" />
+               </HBox.margin>
+            </Button>
+            <Button mnemonicParsing="false" onAction="#logOutUser" text="Đăng xuất người dùng">
+               <HBox.margin>
+                  <Insets right="50.0" />
+               </HBox.margin>
+            </Button>
+            <Button mnemonicParsing="false" onAction="#shutDownUser" text="Tắt máy" />
+         </children>
+      </HBox>
+   </bottom>
+   <right>
+      <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="300.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+        <tabs>
+            <Tab text="OS">
+               <GridPane prefHeight="353.0" prefWidth="383.0" BorderPane.alignment="CENTER">
+                  <columnConstraints>
+                     <ColumnConstraints hgrow="SOMETIMES" maxWidth="140.0" minWidth="10.0" prefWidth="83.0" />
+                     <ColumnConstraints hgrow="SOMETIMES" maxWidth="217.0" minWidth="10.0" prefWidth="217.0" />
+                  </columnConstraints>
+                  <rowConstraints>
+                     <RowConstraints maxHeight="50.0" minHeight="50.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                     <RowConstraints maxHeight="50.0" minHeight="50.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                     <RowConstraints maxHeight="50.0" minHeight="50.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                     <RowConstraints maxHeight="50.0" minHeight="50.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                     <RowConstraints maxHeight="236.0" minHeight="10.0" prefHeight="233.0" vgrow="SOMETIMES" />
+                  </rowConstraints>
+                  <children>
+                     <Label alignment="TOP_LEFT" text="Hệ điều hành" />
+                     <Label fx:id="OsName" alignment="TOP_LEFT" text="Label" wrapText="true" GridPane.columnIndex="1" />
+                     <Label alignment="TOP_LEFT" text="CPU" GridPane.rowIndex="1" />
+                     <Label fx:id="CPUtext" alignment="TOP_LEFT" text="Label" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                     <Label alignment="TOP_LEFT" text="Display" GridPane.rowIndex="2" />
+                     <Label alignment="TOP_LEFT" GridPane.rowIndex="3" />
+                     <Label fx:id="Display" alignment="TOP_LEFT" text="Label" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                     <Label alignment="TOP_LEFT" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                  </children>
+               </GridPane>
+            </Tab>
+          <Tab fx:id="ProcessPane" onSelectionChanged="#onSelectionChanged" text="Process">
+              <VBox>
+                  <children>
+                     <TableView fx:id="Processtable" prefHeight="322.0" prefWidth="300.0">
+                       <columns>
+                         <TableColumn fx:id="ProcessNameColumn" prefWidth="115.0" text="Process Name" />
+                         <TableColumn fx:id="ProcessPIDColumn" prefWidth="86.0" text="PID" />
+                           <TableColumn fx:id="ProcessMemoryColumn" prefWidth="98.0" text="Memory" />
+                       </columns>
+                     </TableView>
+                     <HBox alignment="CENTER" prefHeight="38.0" prefWidth="300.0">
+                        <children>
+                           <Button mnemonicParsing="false" text="Làm mới" onAction="#getNewProcess">
+                              <HBox.margin>
+                                 <Insets right="50.0" />
+                              </HBox.margin></Button>
+                           <Button mnemonicParsing="false" text="Dừng process" onAction="#killProcess" />
+                        </children>
+                     </HBox>
+                  </children></VBox>
+          </Tab>
+        </tabs>
+      </TabPane>
+   </right>
+</BorderPane>
