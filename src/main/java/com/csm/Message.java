@@ -17,6 +17,9 @@ public class Message implements Serializable {
     public static final int GET_CLIPBOARD = 6;
     public static final int GET_LIST_PROCESS = 7;
     public static final int KILL_PROCESS = 8;
+    public static final int GET_DISK = 9;
+    public static final int GET_RAM = 10;
+    public static final int GET_CPU = 11;
     public String data;
     public String toId;
     public int command;

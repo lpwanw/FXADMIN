@@ -1,27 +1,27 @@
 package com.csm.admin.fxadmincsm.controller;
 
 import com.csm.Message;
-import com.csm.SIModel;
 import com.csm.admin.fxadmincsm.Client;
 import com.csm.admin.fxadmincsm.HelloApplication;
+import com.csm.model.DiskModel;
+import com.csm.model.MemoryModel;
 import com.csm.model.OsHWModel;
 import com.csm.model.ProcessModel;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.util.Pair;
 
@@ -44,7 +44,7 @@ public class HelloController implements Initializable {
     public TableColumn<String, String> pcName;
     public Button refeshButton;
     public Label OsName;
-    public Label CPUtext;
+    public TextArea CPUText;
     public Label Display;
     public TabPane tabPane;
     public Tab ProcessPane;
@@ -52,12 +52,26 @@ public class HelloController implements Initializable {
     public TableColumn<ProcessModel,String> ProcessNameColumn;
     public TableColumn<ProcessModel, Integer> ProcessPIDColumn;
     public TableColumn<ProcessModel, String> ProcessMemoryColumn;
+    public TableView<DiskModel> Disktable;
+    public TableColumn<DiskModel, String> DiskNameColumn;
+    public TableColumn<DiskModel, Double> DiskUsedColumn;
+    public TableColumn<DiskModel, Double> DiskAvailableColumn;
+    public TableColumn<DiskModel, String> PercentColumn;
+    public Tab DiskPane;
+    public Tab RamPane;
+    public PieChart RamChart;
+    public PieChart VRamChart;
+    public PieChart DiskChart;
+    public TextArea Ramlabel;
+    public Tab CpuPane;
+    public PieChart CPUChart;
+//    public TextArea CPUText;
     @FXML
     private Label welcomeText;
     public static ObservableList<String> listClient;
     public static HashMap<String,OsHWModel> OShash;
     public static ObservableList<ProcessModel> listProcess;
-
+    public static ObservableList<DiskModel> listDisk;
     //Take Screen Shot
     @FXML
     protected void onHelloButtonClick() {
@@ -150,6 +164,10 @@ public class HelloController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        DiskNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        DiskUsedColumn.setCellValueFactory(new PropertyValueFactory<>("used"));
+        DiskAvailableColumn.setCellValueFactory(new PropertyValueFactory<>("available"));
+        PercentColumn.setCellValueFactory(new PropertyValueFactory<>("percent"));
         pcName.setCellValueFactory(cellData ->
                 new ReadOnlyStringWrapper(cellData.getValue()));
         listClient = FXCollections.observableList(Arrays.asList(""));
@@ -214,7 +232,7 @@ public class HelloController implements Initializable {
         if(OShash.containsKey(index)){
             OsHWModel os = OShash.get(index);
             OsName.setText(os.getOSPreFix());
-            CPUtext.setText(os.getProc());
+            CPUText.setText(os.getProc());
             Display.setText(os.getDisplay());
         }
         try {
@@ -227,15 +245,31 @@ public class HelloController implements Initializable {
             Message msg = (Message) Client.dis.readObject();
             if(msg.data.equals("error")){
                 OsName.setText("");
-                CPUtext.setText("");
+                CPUText.setText("");
                 Display.setText("");
                 return;
             }
-
+            Message object1 = new Message();
+            object1.command = Message.GET_RAM;
+            object1.data = "";
+            object1.toId = index;
+            try {
+                Client.dos.writeObject(object1);
+                Message msg1 = (Message) Client.dis.readObject();
+                System.out.println(msg1.command);
+                if(msg.data.equals("error"))
+                    return;
+                MemoryModel m = new Gson().fromJson(msg1.data,MemoryModel.class);
+                System.out.println(m.getPhysicalMemoryInfo());
+                Ramlabel.setText(m.getPhysicalMemoryInfo());
+            } catch (IOException | ClassNotFoundException e) {
+                System.err.println("Lỗi ghê á, CPU");
+            }
             OsHWModel os = new Gson().fromJson(msg.data,OsHWModel.class);
             OsName.setText(os.getOSPreFix());
-            CPUtext.setText(os.getProc());
+            CPUText.setText(os.getProc());
             Display.setText(os.getDisplay());
+            System.out.println(os.getDisplay());
             OShash.put(index,os);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -346,11 +380,12 @@ public class HelloController implements Initializable {
     }
 
     public void onSelectionChanged() {
+
+        String index = table.getSelectionModel().getSelectedItem();
+        if(index == null||!index.contains("client")){
+            return;
+        }
         if(ProcessPane.isSelected()){
-            String index = table.getSelectionModel().getSelectedItem();
-            if(index == null||!index.contains("client")){
-                return;
-            }
             Message object = new Message();
             object.command = Message.GET_LIST_PROCESS;
             object.data = "";
@@ -367,9 +402,83 @@ public class HelloController implements Initializable {
                 System.err.println("Lỗi ghê á getProcess");
             }
         }
+        if(DiskPane.isSelected()){
+            Message object = new Message();
+            object.command = Message.GET_DISK;
+            object.data = "";
+            object.toId = index;
+            try {
+                Client.dos.writeObject(object);
+                Message msg = (Message) Client.dis.readObject();
+                System.out.println(msg.command);
+                if(msg.data.equals("error"))
+                    return;
+                listDisk = FXCollections.observableList(DiskModel.fromJson(msg.data));
+                Disktable.setItems(listDisk);
+            } catch (IOException | ClassNotFoundException e) {
+                System.err.println("Lỗi ghê á getProcess");
+            }
+        }
+        if(RamPane.isSelected()){
+            Message object = new Message();
+            object.command = Message.GET_RAM;
+            object.data = "";
+            object.toId = index;
+            try {
+                Client.dos.writeObject(object);
+                Message msg = (Message) Client.dis.readObject();
+                System.out.println(msg.command);
+                if(msg.data.equals("error"))
+                    return;
+                MemoryModel m = new Gson().fromJson(msg.data,MemoryModel.class);
+                PieChart.Data sliceR = new PieChart.Data("Ram used", Double.parseDouble(m.getPhysicalMemoryUsed()));
+                PieChart.Data sliceR1 = new PieChart.Data("Ram available", Double.parseDouble(m.getPhysicalMemoryAvailable()));
+                PieChart.Data sliceV = new PieChart.Data("VRam used", Double.parseDouble(m.getVirtualMemoryUsed()));
+                PieChart.Data sliceV1 = new PieChart.Data("VRam available", Double.parseDouble(m.getVirtualMemoryAvailable()));
+                RamChart.setTitle("Ram memory");
+                RamChart.getData().clear();
+                RamChart.getData().add(sliceR);
+                RamChart.getData().add(sliceR1);
+                VRamChart.setTitle("Virtual ram memory");
+                VRamChart.getData().clear();
+                VRamChart.getData().add(sliceV);
+                VRamChart.getData().add(sliceV1);
+            } catch (IOException | ClassNotFoundException e) {
+                System.err.println("Lỗi ghê á getProcess");
+            }
+        }
+//        if(CpuPane.isSelected()){
+//            Message object = new Message();
+//            object.command = Message.GET_CPU;
+//            object.data = "";
+//            object.toId = index;
+//            try {
+//                Client.dos.writeObject(object);
+//                Message msg = (Message) Client.dis.readObject();
+//                System.out.println(msg.command);
+//                if(msg.data.equals("error"))
+//                    return;
+//                System.out.println(msg);
+//            } catch (IOException | ClassNotFoundException e) {
+//                System.err.println("Lỗi ghê á getProcess");
+//            }
+//        }
     }
     public static List<ProcessModel> getProcessfromJson(String json){
             Type listType = new TypeToken<List<ProcessModel>>() {}.getType();
             return new Gson().fromJson(json,listType);
+    }
+
+    public void onDiskSelection() {
+        DiskModel model = Disktable.getSelectionModel().getSelectedItem();
+        if(model==null){
+            return;
+        }
+        PieChart.Data used = new PieChart.Data("Đã sử dụng",model.getUsed());
+        PieChart.Data avail = new PieChart.Data("Còn lại",model.getAvailable());
+        DiskChart.setTitle(model.getName());
+        DiskChart.getData().clear();
+        DiskChart.getData().add(used);
+        DiskChart.getData().add(avail);
     }
 }
