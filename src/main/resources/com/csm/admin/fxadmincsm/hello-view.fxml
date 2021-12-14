@@ -25,6 +25,11 @@
                <HBox.margin>
                   <Insets right="50.0" />
                </HBox.margin></Button>
+            <Button onAction="#onGetKeyLog" mnemonicParsing="false" text="Lấy ghi phím">
+               <HBox.margin>
+                  <Insets right="50.0" />
+               </HBox.margin>
+            </Button>
             <Button mnemonicParsing="false" onAction="#getClipBoardAction" text="Clipboard">
                <HBox.margin>
                   <Insets right="50.0" />
@@ -118,8 +123,6 @@
                      <PieChart fx:id="VRamChart" legendSide="TOP" prefHeight="336.0" prefWidth="309.0" />
                      <HBox prefHeight="100.0" prefWidth="200.0">
                         <children>
-                           <Button mnemonicParsing="false" text="Button" />
-                           <Button mnemonicParsing="false" text="Button" />
                         </children>
                      </HBox>
                   </children>
@@ -129,12 +132,6 @@
                 <VBox>
                     <children>
                         <PieChart fx:id="CPUChart" legendSide="TOP" prefHeight="336.0" prefWidth="309.0" />
-                        <HBox prefHeight="100.0" prefWidth="200.0">
-                            <children>
-                                <Button mnemonicParsing="false" text="Button" />
-                                <Button mnemonicParsing="false" text="Button" />
-                            </children>
-                        </HBox>
                     </children>
                 </VBox>
             </Tab>

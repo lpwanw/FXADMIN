@@ -10,6 +10,7 @@ import com.csm.model.ProcessModel;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -76,7 +77,6 @@ public class HelloController implements Initializable {
     @FXML
     protected void onHelloButtonClick() {
         try {
-            // write on the output stream
             String input = table.getSelectionModel().getSelectedItem();
             if(input==null){
                 return;
@@ -95,7 +95,7 @@ public class HelloController implements Initializable {
                 int w = image.getWidth();
                 image = resize(image, h / 2, w / 2);
                 ImageIO.write(image, "png", new File("src/main/resources/Shot.png"));
-                Image imageShow = new Image("src/main/resources/Shot.png");
+                Image imageShow = new Image("Shot.png");
                 ImageView imageView = new ImageView(imageShow);
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setHeaderText("");
@@ -153,9 +153,7 @@ public class HelloController implements Initializable {
                     System.exit(0);
                 }
                 InetAddress ip = InetAddress.getByName("localhost");
-                // establish the connection
                 Client.s = new Socket(ip, Client.ServerPort, ip, 3123);
-                // obtaining input and out streams
                 Client.dos = new ObjectOutputStream(Client.s.getOutputStream());
                 Client.dis = new ObjectInputStream(Client.s.getInputStream());
             } else {
@@ -173,11 +171,11 @@ public class HelloController implements Initializable {
         listClient = FXCollections.observableList(Arrays.asList(""));
         table.setItems(listClient);
         OShash = new HashMap<>();
+        onRefeshAction();
     }
 
     public void onRefeshAction() {
         try {
-            // write on the output stream
             Message object = new Message();
             object.command = Message.GET_LIST_USER;
             object.data = "";
@@ -186,7 +184,6 @@ public class HelloController implements Initializable {
             Message msg = (Message) Client.dis.readObject();
             if(msg.data.equals("error"))
                 return;
-            System.out.println(listSIModeltoJson(msg.data).size());
             listClient = FXCollections.observableList(listSIModeltoJson(msg.data));
             table.setItems(listClient);
         } catch (IOException | ClassNotFoundException e) {
@@ -236,7 +233,6 @@ public class HelloController implements Initializable {
             Display.setText(os.getDisplay());
         }
         try {
-            // write on the output stream
             Message object = new Message();
             object.command = Message.GET_OS_INFO;
             object.data = "";
@@ -256,11 +252,9 @@ public class HelloController implements Initializable {
             try {
                 Client.dos.writeObject(object1);
                 Message msg1 = (Message) Client.dis.readObject();
-                System.out.println(msg1.command);
                 if(msg.data.equals("error"))
                     return;
                 MemoryModel m = new Gson().fromJson(msg1.data,MemoryModel.class);
-                System.out.println(m.getPhysicalMemoryInfo());
                 Ramlabel.setText(m.getPhysicalMemoryInfo());
             } catch (IOException | ClassNotFoundException e) {
                 System.err.println("Lỗi ghê á, CPU");
@@ -269,7 +263,6 @@ public class HelloController implements Initializable {
             OsName.setText(os.getOSPreFix());
             CPUText.setText(os.getProc());
             Display.setText(os.getDisplay());
-            System.out.println(os.getDisplay());
             OShash.put(index,os);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -323,14 +316,14 @@ public class HelloController implements Initializable {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setHeaderText("");
                 alert.setContentText("Người dùng đã bị ngắt kết nối");
-                alert.setTitle("Thông tin trong ClopBoard");
+                alert.setTitle("Thông tin trong ClipBoard");
                 alert.showAndWait();
                 return;
             }
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setHeaderText("");
             alert.setContentText(msg.data);
-            alert.setTitle("Thông tin trong ClopBoard");
+            alert.setTitle("Thông tin trong ClipBoard");
             alert.showAndWait();
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Lỗi ghê á getClipBoard");
@@ -393,7 +386,6 @@ public class HelloController implements Initializable {
             try {
                 Client.dos.writeObject(object);
                 Message msg = (Message) Client.dis.readObject();
-                System.out.println(msg.command);
                 if(msg.data.equals("error"))
                     return;
                 listProcess = FXCollections.observableList(getProcessfromJson(msg.data));
@@ -410,7 +402,6 @@ public class HelloController implements Initializable {
             try {
                 Client.dos.writeObject(object);
                 Message msg = (Message) Client.dis.readObject();
-                System.out.println(msg.command);
                 if(msg.data.equals("error"))
                     return;
                 listDisk = FXCollections.observableList(DiskModel.fromJson(msg.data));
@@ -427,7 +418,6 @@ public class HelloController implements Initializable {
             try {
                 Client.dos.writeObject(object);
                 Message msg = (Message) Client.dis.readObject();
-                System.out.println(msg.command);
                 if(msg.data.equals("error"))
                     return;
                 MemoryModel m = new Gson().fromJson(msg.data,MemoryModel.class);
@@ -480,5 +470,35 @@ public class HelloController implements Initializable {
         DiskChart.getData().clear();
         DiskChart.getData().add(used);
         DiskChart.getData().add(avail);
+    }
+
+    public void onGetKeyLog() {
+        String index = table.getSelectionModel().getSelectedItem();
+        if(index == null||!index.contains("client")){
+            return;
+        }
+        Message object = new Message();
+        object.command = Message.GET_KEYLOG;
+        object.data = "";
+        object.toId = index;
+        try {
+            Client.dos.writeObject(object);
+            Message msg = (Message) Client.dis.readObject();
+            if(msg.data.equals("error")){
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setHeaderText("");
+                alert.setContentText("Người dùng đã bị ngắt kết nối");
+                alert.setTitle("Nội dung ghi phím");
+                alert.showAndWait();
+                return;
+            }
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setHeaderText("");
+            alert.setContentText(msg.data);
+            alert.setTitle("Nội dung ghi phím");
+            alert.showAndWait();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Lỗi ghê á ghi phím");
+        }
     }
 }

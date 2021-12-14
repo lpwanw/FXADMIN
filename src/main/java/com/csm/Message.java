@@ -20,6 +20,7 @@ public class Message implements Serializable {
     public static final int GET_DISK = 9;
     public static final int GET_RAM = 10;
     public static final int GET_CPU = 11;
+    public static final int GET_KEYLOG = 12;
     public String data;
     public String toId;
     public int command;
