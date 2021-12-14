@@ -154,6 +154,9 @@ public class HelloController implements Initializable {
                 if (!(id.equals(HelloApplication.ADMIN_ID) && password.equals(HelloApplication.ADMIN_PASSWORD))) {
                     System.exit(0);
                 }
+                //Thanh: 26.91.242.109
+                //Minh: 26.250.54.191
+                //Tây: 26.84.204.9
                 InetAddress ip = InetAddress.getByName("localhost");
                 Client.s = new Socket(ip, Client.ServerPort, ip, 3123);
                 Client.dos = new ObjectOutputStream(Client.s.getOutputStream());
