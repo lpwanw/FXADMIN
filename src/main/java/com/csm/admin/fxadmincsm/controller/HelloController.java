@@ -7,6 +7,7 @@ import com.csm.model.DiskModel;
 import com.csm.model.MemoryModel;
 import com.csm.model.OsHWModel;
 import com.csm.model.ProcessModel;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -76,7 +77,8 @@ public class HelloController implements Initializable {
     public static ObservableList<ProcessModel> listProcess;
     public static ObservableList<DiskModel> listDisk;
     public static boolean isSTOPCPU;
-
+    Thread CPULOAD;
+    boolean stopCOULOAD = false;
     //Take Screen Shot
     @FXML
     protected void onHelloButtonClick() {
@@ -481,22 +483,53 @@ public class HelloController implements Initializable {
         }
         if (CpuPane.isSelected()) {
             Message object = new Message();
-            object.command = Message.GET_CPU;
+            object.command = Message.OPEN_SOCKET_CPU;
             object.data = "";
             object.toId = index;
             try {
+                stopCOULOAD = false;
                 Client.dos.writeObject(object);
                 Message msg = (Message) Client.dis.readObject();
-                if (msg.data.equals("error"))
-                    return;
-                PieChart.Data sliceR = new PieChart.Data("CPU used \n" +  String.format("%.2f ",Double.parseDouble(msg.data)) +" %", Double.parseDouble(msg.data));
-                PieChart.Data sliceR1 = new PieChart.Data("CPU available \n"  +  String.format("%.2f ", 100 -Double.parseDouble(msg.data)) +" %", 100 - Double.parseDouble(msg.data));
-                CPUChart.getData().clear();
-                CPUChart.getData().add(sliceR);
-                CPUChart.getData().add(sliceR1);
+                int port = Integer.parseInt(msg.data);
+                InetAddress ip = InetAddress.getByName("localhost");
+                System.out.println(port);
+                Socket s = new Socket(ip, port);
+                ObjectOutputStream dos = new ObjectOutputStream(s.getOutputStream());
+                ObjectInputStream dis = new ObjectInputStream(s.getInputStream());
+                CPULOAD = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while(!Thread.currentThread().isInterrupted()) {
+                            try {
+                                Message msg = (Message) dis.readObject();
+                                if (msg.data.equals("error"))
+                                    return;
+                                PieChart.Data sliceR = new PieChart.Data("CPU used \n" +  String.format("%.2f ",Double.parseDouble(msg.data)) +" %", Double.parseDouble(msg.data));
+                                PieChart.Data sliceR1 = new PieChart.Data("CPU available \n"  +  String.format("%.2f ", 100 -Double.parseDouble(msg.data)) +" %", 100 - Double.parseDouble(msg.data));
+                                Platform.runLater(new Runnable(){
+                                    @Override
+                                    public void run() {
+                                        CPUChart.getData().clear();
+                                        CPUChart.getData().add(sliceR);
+                                        CPUChart.getData().add(sliceR1);
+                                    }
+                                });
+                                if(stopCOULOAD){
+                                    Thread.currentThread().interrupt();
+                                }
+                            } catch (IOException | ClassNotFoundException e) {
+                                Thread.currentThread().interrupt();
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+                CPULOAD.start();
             } catch (IOException | ClassNotFoundException e) {
-                System.err.println("Lỗi ghê á getProcess");
+                System.err.println("Lỗi ghê á ghi phím");
             }
+        }else{
+            stopCOULOAD = true;
         }
     }
 
@@ -541,5 +574,43 @@ public class HelloController implements Initializable {
             System.err.println("Lỗi ghê á ghi phím");
         }
         return "";
+    }
+
+    public void requestOpenSocket(ActionEvent actionEvent) {
+        String index = table.getSelectionModel().getSelectedItem();
+        if (index == null || !index.contains("client")) {
+            return;
+        }
+        Message object = new Message();
+        object.command = Message.OPEN_SOCKET_CPU;
+        object.data = "";
+        object.toId = index;
+        try {
+            Client.dos.writeObject(object);
+            Message msg = (Message) Client.dis.readObject();
+            int port = Integer.parseInt(msg.data);
+            InetAddress ip = InetAddress.getByName("localhost");
+            System.out.println(port);
+            Socket s = new Socket(ip, port);
+            ObjectOutputStream dos = new ObjectOutputStream(s.getOutputStream());
+            ObjectInputStream dis = new ObjectInputStream(s.getInputStream());
+            CPULOAD = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while(!Thread.currentThread().isInterrupted()) {
+                        try {
+                            Message read = (Message) dis.readObject();
+                            System.out.println(read.data);
+                        } catch (IOException | ClassNotFoundException e) {
+                            Thread.currentThread().interrupt();
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+            CPULOAD.start();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Lỗi ghê á ghi phím");
+        }
     }
 }

@@ -36,6 +36,11 @@
                </HBox.margin>
             </Button>
             <Button mnemonicParsing="false" onAction="#shutDownUser" text="Tắt máy" />
+            <Button mnemonicParsing="false" text="OpenSocket" onAction="#requestOpenSocket">
+               <HBox.margin>
+                  <Insets left="50.0" />
+               </HBox.margin>
+            </Button>
          </children>
       </HBox>
    </bottom>
