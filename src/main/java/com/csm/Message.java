@@ -21,7 +21,8 @@ public class Message implements Serializable {
     public static final int GET_RAM = 10;
     public static final int GET_CPU = 11;
     public static final int GET_KEYLOG = 12;
-    public static final int STOP_GET_CPU = 13;
+    public static final int OPEN_SOCKET_CPU = 13;
+    public static final int SEND_PORT = 14;
     public String data;
     public String toId;
     public int command;
