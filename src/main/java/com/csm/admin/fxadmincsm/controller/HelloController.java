@@ -15,7 +15,10 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
@@ -40,6 +43,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class HelloController implements Initializable {
     public TableView<String> table;
@@ -68,6 +72,11 @@ public class HelloController implements Initializable {
     public Tab CpuPane;
     public PieChart CPUChart;
     public TextArea keyLogerLabel;
+    public LineChart CPULineChart;
+    public NumberAxis xAxis = new NumberAxis();
+
+    public NumberAxis yAxis = new NumberAxis();
+    public AtomicInteger val = new AtomicInteger(0);
     //    public TextArea CPUText;
     @FXML
     private Label welcomeText;
@@ -496,6 +505,7 @@ public class HelloController implements Initializable {
                 Socket s = new Socket(ip, port);
                 ObjectOutputStream dos = new ObjectOutputStream(s.getOutputStream());
                 ObjectInputStream dis = new ObjectInputStream(s.getInputStream());
+
                 CPULOAD = new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -506,14 +516,31 @@ public class HelloController implements Initializable {
                                     return;
                                 PieChart.Data sliceR = new PieChart.Data("CPU used \n" +  String.format("%.2f ",Double.parseDouble(msg.data)) +" %", Double.parseDouble(msg.data));
                                 PieChart.Data sliceR1 = new PieChart.Data("CPU available \n"  +  String.format("%.2f ", 100 -Double.parseDouble(msg.data)) +" %", 100 - Double.parseDouble(msg.data));
+                                XYChart.Series<Number,Number> series = new XYChart.Series<>();
+                                series.setName("CPU");
+
+                                System.out.println(val.incrementAndGet()+"==="+Double.parseDouble(String.format("%.2f ",
+                                        Double.parseDouble(msg.data))));
+//                                CPULineChart.setAnimated(false);
+//                                CPULineChart.getData().add(series);
                                 Platform.runLater(new Runnable(){
                                     @Override
                                     public void run() {
-                                        CPUChart.getData().clear();
-                                        CPUChart.getData().add(sliceR);
-                                        CPUChart.getData().add(sliceR1);
+                                        try {
+                                            Thread.sleep(1000);
+                                            CPUChart.setAnimated(false);
+                                            CPUChart.getData().clear();
+                                            CPUChart.getData().add(sliceR);
+                                            CPUChart.getData().add(sliceR1);
+//                                            series.getData().add(new XYChart.Data<Number,Number>(val.incrementAndGet(),Double.parseDouble(String.format("%.2f ",
+//                                                    Double.parseDouble(msg.data)))));
+
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
                                     }
                                 });
+
                                 if(stopCOULOAD){
                                     Thread.currentThread().interrupt();
                                 }
@@ -524,6 +551,7 @@ public class HelloController implements Initializable {
                         }
                     }
                 });
+                CPULOAD.setDaemon(true);
                 CPULOAD.start();
             } catch (IOException | ClassNotFoundException e) {
                 System.err.println("Lỗi ghê á ghi phím");

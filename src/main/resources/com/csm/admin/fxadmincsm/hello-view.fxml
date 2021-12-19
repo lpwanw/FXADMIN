@@ -36,7 +36,7 @@
                </HBox.margin>
             </Button>
             <Button mnemonicParsing="false" onAction="#shutDownUser" text="Tắt máy" />
-            <Button mnemonicParsing="false" text="OpenSocket" onAction="#requestOpenSocket">
+            <Button mnemonicParsing="false" onAction="#requestOpenSocket" text="OpenSocket">
                <HBox.margin>
                   <Insets left="50.0" />
                </HBox.margin>
@@ -133,6 +133,14 @@
             <Tab fx:id="CpuPane" onSelectionChanged="#onSelectionChanged" text="CPU">
                 <VBox>
                     <children>
+                     <LineChart fx:id="CPULineChart" focusTraversable="true" nodeOrientation="LEFT_TO_RIGHT" title="CPU chart">
+                       <xAxis>
+                         <CategoryAxis side="BOTTOM" />
+                       </xAxis>
+                       <yAxis>
+                         <NumberAxis side="LEFT" />
+                       </yAxis>
+                     </LineChart>
                         <PieChart fx:id="CPUChart" legendSide="TOP" prefHeight="336.0" prefWidth="309.0" />
                     </children>
                 </VBox>

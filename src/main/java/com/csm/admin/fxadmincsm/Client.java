@@ -13,7 +13,7 @@ import java.util.Scanner;
 
 public class Client
 {
-    public final static int ServerPort = 1234;
+    public final static int ServerPort = 8888;
     public static ObjectOutputStream dos;
     public static ObjectInputStream dis;
     public static InetAddress ip;
