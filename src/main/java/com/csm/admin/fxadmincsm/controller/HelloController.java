@@ -15,10 +15,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.PieChart;
-import javafx.scene.chart.XYChart;
+import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
@@ -43,6 +40,10 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class HelloController implements Initializable {
@@ -72,7 +73,7 @@ public class HelloController implements Initializable {
     public Tab CpuPane;
     public PieChart CPUChart;
     public TextArea keyLogerLabel;
-    public LineChart CPULineChart;
+    public LineChart<String,Number> CPULineChart;
     public NumberAxis xAxis = new NumberAxis();
 
     public NumberAxis yAxis = new NumberAxis();
@@ -478,10 +479,12 @@ public class HelloController implements Initializable {
                 double VRamUsed = Double.parseDouble(m.getVirtualMemoryUsed())/ (Double.parseDouble(m.getVirtualMemoryUsed())+ Double.parseDouble(m.getVirtualMemoryAvailable()));
                 PieChart.Data sliceV = new PieChart.Data("VRam used \n" + String.format("%.2f",VRamUsed*100) + " %", Double.parseDouble(m.getVirtualMemoryUsed()));
                 PieChart.Data sliceV1 = new PieChart.Data("VRam available \n" + String.format("%.2f",100 - (VRamUsed*100)) + " %", Double.parseDouble(m.getVirtualMemoryAvailable()));
+                RamChart.setAnimated(false);
                 RamChart.setTitle("Ram memory");
                 RamChart.getData().clear();
                 RamChart.getData().add(sliceR);
                 RamChart.getData().add(sliceR1);
+                VRamChart.setAnimated(false);
                 VRamChart.setTitle("Virtual ram memory");
                 VRamChart.getData().clear();
                 VRamChart.getData().add(sliceV);
@@ -505,7 +508,12 @@ public class HelloController implements Initializable {
                 Socket s = new Socket(ip, port);
                 ObjectOutputStream dos = new ObjectOutputStream(s.getOutputStream());
                 ObjectInputStream dis = new ObjectInputStream(s.getInputStream());
-
+                XYChart.Series<String,Number> series = new XYChart.Series<>();
+                CPULineChart.setTitle("CPU");
+//                CPULineChart.setAnimated(false);
+                CPULineChart.getData().clear();
+                CPULineChart.getData().add(series);
+                final ScheduledExecutorService[] scheduledExecutorService = new ScheduledExecutorService[1];
                 CPULOAD = new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -516,31 +524,30 @@ public class HelloController implements Initializable {
                                     return;
                                 PieChart.Data sliceR = new PieChart.Data("CPU used \n" +  String.format("%.2f ",Double.parseDouble(msg.data)) +" %", Double.parseDouble(msg.data));
                                 PieChart.Data sliceR1 = new PieChart.Data("CPU available \n"  +  String.format("%.2f ", 100 -Double.parseDouble(msg.data)) +" %", 100 - Double.parseDouble(msg.data));
-                                XYChart.Series<Number,Number> series = new XYChart.Series<>();
-                                series.setName("CPU");
 
-                                System.out.println(val.incrementAndGet()+"==="+Double.parseDouble(String.format("%.2f ",
-                                        Double.parseDouble(msg.data))));
+//                                System.out.println(val.incrementAndGet()+"==="+Double.parseDouble(String.format("%.2f ",
+//                                        Double.parseDouble(msg.data))));
 //                                CPULineChart.setAnimated(false);
 //                                CPULineChart.getData().add(series);
+                                double value = Double.parseDouble(String.format("%.2f ",Double.parseDouble(msg.data)));
                                 Platform.runLater(new Runnable(){
                                     @Override
                                     public void run() {
                                         try {
-                                            Thread.sleep(1000);
+                                            Thread.sleep(100);
                                             CPUChart.setAnimated(false);
                                             CPUChart.getData().clear();
                                             CPUChart.getData().add(sliceR);
                                             CPUChart.getData().add(sliceR1);
-//                                            series.getData().add(new XYChart.Data<Number,Number>(val.incrementAndGet(),Double.parseDouble(String.format("%.2f ",
-//                                                    Double.parseDouble(msg.data)))));
+                                            series.getData().add(new XYChart.Data<>(val.incrementAndGet()+"",value));
 
+                                            if (series.getData().size() > 50)
+                                                series.getData().remove(0);
                                         } catch (InterruptedException e) {
                                             e.printStackTrace();
                                         }
                                     }
                                 });
-
                                 if(stopCOULOAD){
                                     Thread.currentThread().interrupt();
                                 }
@@ -574,6 +581,7 @@ public class HelloController implements Initializable {
         }
         PieChart.Data used = new PieChart.Data("Đã sử dụng: \n" +model.getPercent() + "%", model.getUsed());
         PieChart.Data avail = new PieChart.Data("Còn lại: \n" +String.format("%.2f ", 100-Double.parseDouble(model.getPercent())) +"%", model.getAvailable());
+        DiskChart.setAnimated(false);
         DiskChart.setTitle(model.getName() + String.format(": %.2f ",(model.getUsed() + model.getAvailable())/1073741824) + "GiB");
         DiskChart.getData().clear();
         DiskChart.getData().add(used);

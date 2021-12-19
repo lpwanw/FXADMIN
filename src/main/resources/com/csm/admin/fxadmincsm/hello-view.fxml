@@ -86,7 +86,7 @@
           <Tab fx:id="ProcessPane" onSelectionChanged="#onSelectionChanged" text="Tiến trình">
               <VBox>
                   <children>
-                     <TableView fx:id="Processtable" prefHeight="322.0" prefWidth="300.0">
+                     <TableView fx:id="Processtable" prefHeight="616.0" prefWidth="377.0">
                        <columns>
                          <TableColumn fx:id="ProcessNameColumn" prefWidth="115.0" text="Tiến trình" />
                          <TableColumn fx:id="ProcessPIDColumn" prefWidth="86.0" text="PID" />
@@ -133,13 +133,16 @@
             <Tab fx:id="CpuPane" onSelectionChanged="#onSelectionChanged" text="CPU">
                 <VBox>
                     <children>
-                     <LineChart fx:id="CPULineChart" focusTraversable="true" nodeOrientation="LEFT_TO_RIGHT" title="CPU chart">
+                     <LineChart fx:id="CPULineChart" createSymbols="false" focusTraversable="true" nodeOrientation="LEFT_TO_RIGHT" prefHeight="362.0" prefWidth="345.0" title="CPU chart">
                        <xAxis>
                          <CategoryAxis side="BOTTOM" />
                        </xAxis>
                        <yAxis>
                          <NumberAxis side="LEFT" />
                        </yAxis>
+                        <VBox.margin>
+                           <Insets right="20.0" />
+                        </VBox.margin>
                      </LineChart>
                         <PieChart fx:id="CPUChart" legendSide="TOP" prefHeight="336.0" prefWidth="309.0" />
                     </children>
